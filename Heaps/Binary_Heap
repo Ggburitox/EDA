@@ -1,0 +1,64 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+
+class MaxHeap {
+public:
+    std::vector<int> V;
+
+    MaxHeap(std::vector<int> _V) {
+        V = _V;
+    }
+
+private:
+    int parent(int i) {
+        return (i-1)/2;
+    }
+    int left(int i) {
+        return 2 * i + 1;
+    }
+
+    int right(int i) {
+        return 2 * i + 2;
+    }
+    void heapify(int i) {
+        int m = i;
+        int l = left(i);
+        int r = right(i);
+        if (l < V.size() && V[l] > V[m]) {
+            m = l;
+        }
+        if (r < V.size() && V[r] > V[m]) {
+            m = r;
+        }
+        if (m != i) {
+            std::swap(V[i], V[m]);
+            heapify(m);
+        }
+    }
+public:
+    void build_heap() {
+        for (int i = V.size()/2 - 1; i >= 0; i--) {
+            heapify(i);
+        }
+    }
+    void print_heap() {
+        for (int i = 0; i < V.size(); i++) {
+            std::cout << i <<": " << V[i] << " ";
+        }
+    }
+
+};
+
+int main() {
+    std::vector<int> V = {4, 14, 10, 8, 2, 9, 3};
+
+    MaxHeap heap(V);
+    heap.print_heap();
+
+    heap.build_heap();
+    std::cout<<"\n";
+    heap.print_heap();
+
+    return 0;
+}
