@@ -1,0 +1,200 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+#include <algorithm>
+
+// Estructura de un nodo para el Montículo Binomial
+struct Node {
+    int llave;
+    int grado;
+    Node* padre;
+    Node* hijo;
+    Node* siguiente_hermano;
+
+    Node(int k) {
+        llave = k;
+        grado = 0;
+        padre = nullptr;
+        hijo = nullptr;
+        siguiente_hermano = nullptr;
+    }
+};
+
+class BinomialHeap {
+private:
+    Node* head;
+
+    void binomial_link(Node* y, Node* z) {
+        y->padre = z;
+        y->siguiente_hermano = z->hijo;
+        z->hijo = y;
+        z->grado = z->grado + 1;
+    }
+
+    Node* merge_roots(Node* H1, Node* H2) {
+        if (!H1) return H2;
+        if (!H2) return H1;
+
+        Node* res = nullptr;
+        Node** pos = &res;
+
+        while (H1 && H2) {
+            if (H1->grado <= H2->grado) {
+                *pos = H1;
+                H1 = H1->siguiente_hermano;
+            } else {
+                *pos = H2;
+                H2 = H2->siguiente_hermano;
+            }
+            pos = &((*pos)->siguiente_hermano);
+        }
+        if (H1) *pos = H1;
+        else *pos = H2;
+
+        return res;
+    }
+
+public:
+    BinomialHeap() {
+        head = nullptr;
+    }
+
+    Node* union_heaps(Node* H1, Node* H2) {
+        Node* H = merge_roots(H1, H2);
+        if (H == nullptr) return nullptr;
+
+        Node* prev_x = nullptr;
+        Node* x = H;
+        Node* y = x->siguiente_hermano;
+
+        while (y != nullptr) {
+
+            if (x->grado != y->grado || 
+               (y->siguiente_hermano != nullptr && y->siguiente_hermano->grado == x->grado)) {
+                prev_x = x;
+                x = y;
+            } else {
+
+                if (x->llave <= y->llave) {
+                    x->siguiente_hermano = y->siguiente_hermano;
+                    binomial_link(y, x);
+                } else {
+                    if (prev_x == nullptr) {
+                        H = y;
+                    } else {
+                        prev_x->siguiente_hermano = y;
+                    }
+                    binomial_link(x, y);
+                    x = y;
+                }
+            }
+            y = x->siguiente_hermano;
+        }
+        return H;
+    }
+
+
+    void insert(int k) {
+        Node* x = new Node(k);
+        head = union_heaps(head, x);
+    }
+
+
+    Node* extract_min() {
+        if (head == nullptr) return nullptr;
+
+        Node* min_node = head;
+        Node* min_prev = nullptr;
+        Node* prev = head;
+        Node* curr = head->siguiente_hermano;
+
+        while (curr != nullptr) {
+            if (curr->llave < min_node->llave) {
+                min_node = curr;
+                min_prev = prev;
+            }
+            prev = curr;
+            curr = curr->siguiente_hermano;
+        }
+
+        if (min_prev == nullptr) {
+            head = min_node->siguiente_hermano;
+        } else {
+            min_prev->siguiente_hermano = min_node->siguiente_hermano;
+        }
+
+        Node* child = min_node->hijo;
+        Node* H_prime = nullptr;
+        while (child != nullptr) {
+            Node* next = child->siguiente_hermano;
+            child->siguiente_hermano = H_prime;
+            child->padre = nullptr;
+            H_prime = child;
+            child = next;
+        }
+
+        head = union_heaps(head, H_prime);
+
+        return min_node;
+    }
+
+    void decrease_key(Node* x, int k) {
+        if (k > x->llave) {
+            std::cerr << "La nueva llave es mayor que la actual.\n";
+            return;
+        }
+        x->llave = k;
+        Node* y = x;
+        Node* z = y->padre;
+
+        while (z != nullptr && y->llave < z->llave) {
+            std::swap(y->llave, z->llave);
+            y = z;
+            z = y->padre;
+        }
+    }
+
+    void delete_node(Node* x) {
+        decrease_key(x, std::numeric_limits<int>::min());
+        Node* min_node = extract_min();
+        delete min_node;
+    }
+
+    void print_tree(Node* n, int depth) {
+        while (n != nullptr) {
+            for (int i = 0; i < depth; i++) std::cout << "  ";
+            std::cout << n->llave << " (Grado " << n->grado << ")\n";
+            print_tree(n->hijo, depth + 1);
+            n = n->siguiente_hermano;
+        }
+    }
+
+    void print_heap() {
+        std::cout << "--- Monticulo Binomial ---\n";
+        print_tree(head, 0);
+        std::cout << "--------------------------\n";
+    }
+};
+
+int main() {
+    BinomialHeap heap;
+    std::vector<int> V = {4, 14, 10, 8, 2, 9, 3};
+
+    for (int value : V) {
+        heap.insert(value);
+    }
+
+    std::cout << "Heap despues de insertar elementos:\n";
+    heap.print_heap();
+
+    Node* min = heap.extract_min();
+    if (min) {
+        std::cout << "\nMinimo extraido: " << min->llave << "\n";
+        delete min;
+    }
+
+    std::cout << "Heap despues de Extract-Min:\n";
+    heap.print_heap();
+
+    return 0;
+}
