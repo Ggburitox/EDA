@@ -1,0 +1,63 @@
+template<typename data_type>
+struct PersistentSegmentTree {
+    struct SegmentTreeNode {
+        data_type data;
+        int l, r;
+        SegmentTreeNode* left;
+        SegmentTreeNode* right;
+    };
+
+    vector<SegmentTreeNode*> version_roots;
+
+    PersistentSegmentTree(int l, int r) {
+        version_roots.emplace_back(SegmentTreeNode{data_type(), l, r, nullptr, nullptr});
+        build(version_roots[0]);
+    }
+
+    void Build(SegmentTreeNode* root) {
+        if (root ->l == root -> r) {
+            root -> data = data_type();
+            return;
+        };
+        int mid = (root -> l + root -> r) / 2;
+        root -> left = new SegmentTreeNode{data_type(), root -> l, mid, nullptr, nullptr};
+        root -> right = new SegmentTreeNode{data_type(), mid + 1, root -> r, nullptr, nullptr};
+        Build(root -> left);
+        Build(root -> right);
+        root data = root -> left -> data + root -> right -> data;
+    }
+
+    void update(int pos, data_type value, SegmentTreeNode* last, SegmentTreeNode* current) {
+        if (current -> l == current -> r) {
+            current -> data = value;
+            return;
+        }
+        int mid = (current -> l + current -> r) / 2;
+        if (pos <= mid) {
+            current -> left = new SegmentTreeNode{data_type(), current -> l, mid, nullptr, nullptr};
+            current -> right = last -> right;
+            update(pos, value, last -> left, current -> left);
+        } else {
+            current -> left = last -> left;
+            current -> right = new SegmentTreeNode{data_type(), mid + 1, current -> r, nullptr, nullptr};
+            update(pos, value, last -> right, current -> right);
+        }
+        current -> data = current -> left -> data + current -> right -> data;
+    }
+
+    void update(int version, int pos, data_type value) {
+        SegmentTreeNode* new_root = new SegmentTreeNode{data_type(), version_roots[0] -> l, version_roots[0] -> r, nullptr, nullptr};
+        version_roots.emplace_back(new_root);
+        update(pos,value, version_roots[version], root);
+    }
+
+    data_type query(SegmentTreeNode* root, int x, int y) {
+        if (root -> l > y || root -> r < x) return data_type(0);
+        if (root -> l >= x && root -> r <= y) return root -> data;
+        return query(root -> left, x, y) + query(root -> right, x, y);
+    }
+
+    data_type query(int version, int x, int y) {
+        return query(version_roots[version], x, y);
+    }
+};
