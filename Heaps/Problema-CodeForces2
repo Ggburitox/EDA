@@ -1,0 +1,92 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+class MaxHeap {
+public:
+    std::vector<int> V;
+
+    MaxHeap() {}
+
+    MaxHeap(std::vector<int> _V) {
+        V = _V;
+    }
+
+private:
+    int parent(int i) {
+        return (i-1)/2;
+    }
+    int left(int i) {
+        return 2 * i + 1;
+    }
+    int right(int i) {
+        return 2 * i + 2;
+    }
+    void heapify(int i) {
+        int m = i;
+        int l = left(i);
+        int r = right(i);
+        if (l < V.size() && V[l] > V[m]) {
+            m = l;
+        }
+        if (r < V.size() && V[r] > V[m]) {
+            m = r;
+        }
+        if (m != i) {
+            std::swap(V[i], V[m]);
+            heapify(m);
+        }
+    }
+public:
+
+    void insert(int k) {
+        V.push_back(k);
+        int i = V.size() - 1;
+        int p = parent(i);
+        while (i > 0 && V[i] > V[p]) {
+            std::swap(V[i], V[p]);
+            i = p;
+            p = parent(i);
+        }
+    }
+
+    int extract_max() {
+        int max = V[0];
+        std::swap(V[0], V[V.size() - 1]);
+        V.pop_back();
+        heapify(0);
+        return max;
+    }
+};
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int n;
+    std::cin >> n;
+
+    MaxHeap heap;
+    long long salud = 0;
+    int tomadas = 0;
+
+    for (int i = 0; i < n; i++) {
+        int pocion;
+        std::cin >> pocion;
+        salud += pocion;
+        tomadas++;
+        if (pocion < 0) {
+            heap.insert(std::abs(pocion));
+        }
+
+        if (salud < 0) {
+            int v = heap.extract_max();
+            salud += v;
+            tomadas--;
+        }
+
+    }
+
+    std::cout << tomadas << std::endl;
+    return 0;
+};
